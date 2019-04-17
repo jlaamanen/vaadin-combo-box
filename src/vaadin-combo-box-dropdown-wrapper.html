@@ -16,7 +16,7 @@ This program is available under Apache License Version 2.0, available at https:/
         hidden="[[_hidden(_items.*, loading)]]"
         position-target="[[positionTarget]]"
         on-template-changed="_templateChanged"
-        on-position-changed="_setOverlayHeight"
+        on-position-changed="_updateOverlayDimensions"
         disable-upgrade
         theme="[[theme]]">
       <template>
@@ -114,7 +114,7 @@ This program is available under Apache License Version 2.0, available at https:/
             type: Boolean,
             value: false,
             reflectToAttribute: true,
-            observer: '_setOverlayHeight'
+            observer: '_updateOverlayDimensions'
           },
 
           /**
@@ -229,11 +229,16 @@ This program is available under Apache License Version 2.0, available at https:/
         this._patchWheelOverScrolling();
       }
 
-      _setOverlayHeight() {
+      _updateOverlayDimensions() {
         if (!this.opened || !this.positionTarget || !this._selector) {
           return;
         }
+        this._setOverlayHeight();
+        this._setOverlayWidth();
+        this.updateViewportBoundaries();
+      }
 
+      _setOverlayHeight() {
         const targetRect = this.positionTarget.getBoundingClientRect();
 
         this._scroller.style.maxHeight = (window.ShadyCSS ?
@@ -247,8 +252,15 @@ This program is available under Apache License Version 2.0, available at https:/
 
         // we need to set height for iron-list to make its `firstVisibleIndex` work correctly.
         this._selector.style.maxHeight = maxHeight;
+      }
 
-        this.updateViewportBoundaries();
+      _setOverlayWidth() {
+        const width = (window.ShadyCSS ?
+          window.ShadyCSS.getComputedStyleValue(this, '--vaadin-combo-box-overlay-width') :
+          getComputedStyle(this).getPropertyValue('--vaadin-combo-box-overlay-width'));
+        if (width && width.length > 0) {
+          this.$.dropdown.$.overlay.style.width = width;
+        }
       }
 
       _maxOverlayHeight(targetRect) {
